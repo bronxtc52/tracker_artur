@@ -4,7 +4,18 @@
 
 > 📄 **Продуктовое ТЗ (описательное, без тех. стека)** — как работает сервис и как взаимодействуют бот, Telegram Mini App и веб-кабинет: [`docs/portal-spec.md`](docs/portal-spec.md). Ключевой принцип: три канала поверх единого ядра, веб-кабинет сотрудника = основа Mini App.
 
-## ✅ Статус проекта: АКТИВЕН на Azure ACA (реактивирован 2026-05-31)
+## ⏸ Статус проекта: НА ПАУЗЕ с 2026-06-12 (ресурсы остановлены, НЕ удалены)
+
+Проект приостановлен пользователем 2026-06-12. Что сделано:
+- **ACA-приложения** `ca-tracker-artur-{web,api,bot}` — остановлены (`runningStatus: Stopped`; в CLI-расширении containerapp 1.3.0b4 нет `az containerapp stop` — стоп/старт через `az rest --method post .../containerApps/<name>/{stop|start}?api-version=2024-03-01`).
+- **PostgreSQL** `psql-tracker-artur-prod` — остановлен (`az postgres flexible-server stop`). ⚠️ **Azure автоматически запустит сервер через 7 дней** — если пауза дольше, останавливать заново (или принять авто-старт: compute снова будет тарифицироваться).
+- **Алёрты** — все 14 правил в RG отключены (12 metric `al-ca-tracker-artur-*` + 2 scheduled-query `al-tracker-artur-*`).
+- **server-watchdog** — RG исключён из дайджеста через `AZURE_RESOURCE_GROUPS` в `/etc/server-watchdog/server-watchdog.env` (комментарий там же).
+- Данные целы: БД (storage тарифицируется), образы в ACR, секреты в KV, DNS `tracker.adarasoft.com` не тронут (сайт недоступен, пока web остановлен).
+
+**Реактивация:** `az postgres flexible-server start` → `az rest .../start` для трёх приложений → включить 14 алёрт-правил (`--enabled true` / `--disabled false`) → удалить строку `AZURE_RESOURCE_GROUPS` из env watchdog'а → проверить `az containerapp revision list` и сайт.
+
+## Историческая справка: был АКТИВЕН на Azure ACA (реактивирован 2026-05-31)
 
 Проект пересоздан с нуля на Azure Container Apps после потери старого хоста `172.201.9.182` (был удалён 2026-05-27, БД утеряны). БД стартовала пустой; admin-пользователь засеивается автоматически из `ADMIN_EMAIL`/`ADMIN_PASSWORD` при старте backend.
 
