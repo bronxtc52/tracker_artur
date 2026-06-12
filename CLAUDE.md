@@ -4,16 +4,16 @@
 
 > 📄 **Продуктовое ТЗ (описательное, без тех. стека)** — как работает сервис и как взаимодействуют бот, Telegram Mini App и веб-кабинет: [`docs/portal-spec.md`](docs/portal-spec.md). Ключевой принцип: три канала поверх единого ядра, веб-кабинет сотрудника = основа Mini App.
 
-## ⏸ Статус проекта: НА ПАУЗЕ с 2026-06-12 (ресурсы остановлены, НЕ удалены)
+## ⏸ Статус проекта: НА ПАУЗЕ с 2026-06-12 — БЕССРОЧНО (ресурсы остановлены, НЕ удалены)
 
-Проект приостановлен пользователем 2026-06-12. Что сделано:
+Проект приостановлен пользователем 2026-06-12; возобновление **не планируется** (подтверждено пользователем в тот же день). Что сделано:
 - **ACA-приложения** `ca-tracker-artur-{web,api,bot}` — остановлены (`runningStatus: Stopped`; в CLI-расширении containerapp 1.3.0b4 нет `az containerapp stop` — стоп/старт через `az rest --method post .../containerApps/<name>/{stop|start}?api-version=2024-03-01`).
-- **PostgreSQL** `psql-tracker-artur-prod` — остановлен (`az postgres flexible-server stop`). ⚠️ **Azure автоматически запустит сервер через 7 дней** — если пауза дольше, останавливать заново (или принять авто-старт: compute снова будет тарифицироваться).
+- **PostgreSQL** `psql-tracker-artur-prod` — остановлен (`az postgres flexible-server stop`). Azure авто-стартует остановленный сервер каждые 7 дней, поэтому стоит **cron-страж на mh-central**: `10 4 * * * /home/azureuser/scripts/tracker-pg-keep-stopped.sh` (лог `/tmp/tracker-pg-keep-stopped.log`) — ежедневно проверяет state и гасит обратно, если Azure поднял. **При реактивации или удалении проекта убрать cron-строку и скрипт.**
 - **Алёрты** — все 14 правил в RG отключены (12 metric `al-ca-tracker-artur-*` + 2 scheduled-query `al-tracker-artur-*`).
 - **server-watchdog** — RG исключён из дайджеста через `AZURE_RESOURCE_GROUPS` в `/etc/server-watchdog/server-watchdog.env` (комментарий там же).
 - Данные целы: БД (storage тарифицируется), образы в ACR, секреты в KV, DNS `tracker.adarasoft.com` не тронут (сайт недоступен, пока web остановлен).
 
-**Реактивация:** `az postgres flexible-server start` → `az rest .../start` для трёх приложений → включить 14 алёрт-правил (`--enabled true` / `--disabled false`) → удалить строку `AZURE_RESOURCE_GROUPS` из env watchdog'а → проверить `az containerapp revision list` и сайт.
+**Реактивация (если всё же понадобится):** убрать cron-стража (`crontab -e` + `rm ~/scripts/tracker-pg-keep-stopped.sh`) → `az postgres flexible-server start` → `az rest .../start` для трёх приложений → включить 14 алёрт-правил (`--enabled true` / `--disabled false`) → удалить строку `AZURE_RESOURCE_GROUPS` из env watchdog'а → проверить `az containerapp revision list` и сайт. Полная процедура — runbook `knowledge-base/runbooks/project-pause-resume-delete-azure.md` / скилл `/resume-project`.
 
 ## Историческая справка: был АКТИВЕН на Azure ACA (реактивирован 2026-05-31)
 
